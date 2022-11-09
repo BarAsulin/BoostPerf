@@ -29,12 +29,12 @@ char* WrappedMessage::body()
 	return m_data + header_length;
 }
 
-size_t WrappedMessage::body_length() const
+size_t WrappedMessage::getBodyLength() const
 {
 	return m_body_length;
 }
 
-void WrappedMessage::body_length(size_t new_length)
+void WrappedMessage::setBodyLength(size_t new_length)
 {
 	m_body_length = new_length;
 	if (m_body_length > max_body_length)
@@ -44,11 +44,11 @@ void WrappedMessage::body_length(size_t new_length)
 }
 
 
-bool WrappedMessage::decode_header() // the purpose of this method is to review the first 4 bytes of the data, and determine the body length and assign to body_legnth
+bool WrappedMessage::decodeHeader() // decode the header and assign to body length.
 {
 	char tempHeader[header_length + 1];
 	std::memcpy(tempHeader, m_data, header_length);
-	m_body_length = std::atoi(tempHeader);
+	m_body_length = std::stoi(tempHeader);
 	if (m_body_length > max_body_length)
 	{
 		m_body_length = 0;
@@ -57,12 +57,13 @@ bool WrappedMessage::decode_header() // the purpose of this method is to review 
 	return true;
 }
 
-void WrappedMessage::encode_header()  // the purpose of this method is to look at the body length and write it's size to the first 4 bytes of the data.
+void WrappedMessage::encodeHeader()  // encode the body length in the first few bytes of the packet.
 {
 	std::string bodySizeString = std::to_string(m_body_length);
 	std::memcpy(m_data, bodySizeString.data(), header_length);
 }
 
-
+const std::string WrappedMessage::exampleDataToSend = "abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvw"
+"xyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|abcdefghijklmnopqrstuvwxyz0123456789!@#$%^&*()-=_+[]{}|";
 
 

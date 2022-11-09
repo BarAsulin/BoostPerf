@@ -18,11 +18,11 @@ public:
 	void dispatchSocketForWrite();
 
 private:
-	void do_read_header();
-	void do_read_body();
+	void doReadHeader();
+	void doReadBody();
 
-	void do_encode_msg();
-	void do_write_msg();
+	void doEncodeBeforeWrite();
+	void doWriteMsg();
 
 	void addSentBytes(size_t bytes);
 	size_t getSentBytes() const;

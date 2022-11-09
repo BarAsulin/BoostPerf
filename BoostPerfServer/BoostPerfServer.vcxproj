@@ -141,11 +141,13 @@
   <ItemGroup>
     <ClCompile Include="BoostPerfServer.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="ParsedArgv.cpp" />
     <ClCompile Include="WrappedMessage.cpp" />
     <ClCompile Include="WrappedSocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoostPerfServer.h" />
+    <ClInclude Include="ParsedArgv.h" />
     <ClInclude Include="WrappedMessage.h" />
     <ClInclude Include="WrappedSocket.h" />
   </ItemGroup>

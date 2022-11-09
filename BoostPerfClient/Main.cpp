@@ -1,9 +1,17 @@
 #include "BoostPerfClient.h"
+#include "ParsedArgv.h"
 #include <iostream>
 
 int main(int argc, char* argv[])
 {
-	BoostPerfClient	perfClient("127.0.0.1", 2005, 8);
+	if (argc < 4)
+	{
+		std::cout << "not enough arguments\n";
+		std::cin.get();
+	}
+	ParsedArgv arguments(argc, argv);
+	
+	BoostPerfClient	perfClient(arguments.m_serverHostname, arguments.m_port, arguments.m_sockets);
 	std::thread iocThread(&BoostPerfClient::runIoContext, std::ref(perfClient));
 	std::thread dispatchSocketsThread(&BoostPerfClient::runSocketsLoop, std::ref(perfClient));
 
