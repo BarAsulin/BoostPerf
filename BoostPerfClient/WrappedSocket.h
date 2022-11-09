@@ -16,6 +16,8 @@ public:
 	boost::asio::ip::tcp::socket m_socket;
 	void dispatchSocketForListen();
 	void dispatchSocketForWrite();
+	void addSentBytes(size_t bytes);
+	size_t getSentBytes() const;
 
 private:
 	void doReadHeader();
@@ -24,8 +26,6 @@ private:
 	void doEncodeBeforeWrite();
 	void doWriteMsg();
 
-	void addSentBytes(size_t bytes);
-	size_t getSentBytes() const;
 	
 
 private:

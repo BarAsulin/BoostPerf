@@ -83,6 +83,7 @@ void WrappedSocket::doWriteMsg()
         {
             if (!ec)
             {
+                this->addSentBytes(length);
                 doEncodeBeforeWrite();
             }
             else

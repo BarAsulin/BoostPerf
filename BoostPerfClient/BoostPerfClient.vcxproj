@@ -140,7 +140,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="BoostPerfClient.h" />
+    <ClInclude Include="BytesConversion.h" />
     <ClInclude Include="ParsedArgv.h" />
+    <ClInclude Include="Timer.h" />
     <ClInclude Include="WrappedMessage.h" />
     <ClInclude Include="WrappedSocket.h" />
   </ItemGroup>

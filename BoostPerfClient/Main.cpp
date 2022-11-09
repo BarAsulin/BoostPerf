@@ -2,6 +2,7 @@
 #include "ParsedArgv.h"
 #include <iostream>
 
+
 int main(int argc, char* argv[])
 {
 	if (argc < 4)
@@ -14,7 +15,9 @@ int main(int argc, char* argv[])
 	BoostPerfClient	perfClient(arguments.m_serverHostname, arguments.m_port, arguments.m_sockets);
 	std::thread iocThread(&BoostPerfClient::runIoContext, std::ref(perfClient));
 	std::thread dispatchSocketsThread(&BoostPerfClient::runSocketsLoop, std::ref(perfClient));
+	std::thread printStats(&BoostPerfClient::printSocketsStats, std::ref(perfClient));
 
+	printStats.join();
 	iocThread.join();
 	dispatchSocketsThread.join();
 	std::cin.get();

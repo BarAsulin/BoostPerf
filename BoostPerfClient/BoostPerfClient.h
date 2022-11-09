@@ -10,11 +10,13 @@ public:
 	BoostPerfClient(const std::string& hostname, int port, size_t numOfStreams);
     void runIoContext();
     void runSocketsLoop();
+    void printSocketsStats();
 private:
     void addSocket();
     void dispatchSockets();
     void cleanupClosedSockets();
     void doConnect();
+    
 private:
     boost::asio::io_context m_ioc{};
     int m_port;

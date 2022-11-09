@@ -1,5 +1,8 @@
 #include "BoostPerfClient.h"
+#include "BytesConversion.h"
+#include "Timer.h"
 #include <iostream>
+
 using namespace boost::beast;
 using namespace boost::asio;
 using namespace boost::asio::ip;
@@ -56,7 +59,30 @@ void BoostPerfClient::runSocketsLoop() // called when new sockets are added, dis
 		cleanupClosedSockets();
 	}
 }
-void BoostPerfClient::runIoContext() // a loop to keep the asio context running as long as the client/server is alive.
+void BoostPerfClient::printSocketsStats()
+{
+	Timer timer{};
+	timer.Start();
+	while (true)
+	{
+
+		std::this_thread::sleep_for(std::chrono::seconds(5));
+		std::cout << "Sockets rate sent in kbps:\n | ";
+		size_t sumInBytes{};
+		for (auto& wrappedSocket : m_sockets)
+		{
+			size_t socketSentBytes = wrappedSocket.get()->getSentBytes();
+			sumInBytes += socketSentBytes;
+
+			std::cout << (socketSentBytes/128) / timer.GetDuration()  << " | ";
+		}
+		std::cout << "\n Average sent per socket in KiB per second: " << bytesToKiB(sumInBytes / m_sockets.size())/timer.GetDuration() << '\n';
+	}
+}
+
+// called under lock
+// a loop to keep the asio context running as long as the client/server is alive.
+void BoostPerfClient::runIoContext() 
 {
 	while (m_runClient)
 	{
@@ -64,8 +90,9 @@ void BoostPerfClient::runIoContext() // a loop to keep the asio context running 
 	}
 }
 
-
-void BoostPerfClient::dispatchSockets() // go over alls sockets in the vector and dispatch it for the job desired.
+// called under lock
+// go over alls sockets in the vector and dispatch it for the job desired.
+void BoostPerfClient::dispatchSockets() 
 {
 	for (auto& wrappedSocket : m_sockets)
 	{

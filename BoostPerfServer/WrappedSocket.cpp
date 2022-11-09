@@ -54,8 +54,8 @@ void WrappedSocket::doReadBody()
         {
             if (!ec)
             {
-                std::cout.write(m_msg.body(), m_msg.getBodyLength());
-                std::cout << '\n';
+                //std::cout.write(m_msg.body(), m_msg.getBodyLength());
+                //std::cout << '\n';
                 this->doReadHeader();
             }
             else
@@ -83,6 +83,7 @@ void WrappedSocket::doWriteMsg()
         {
             if (!ec)
             {
+                this->addSentBytes(length);
                 doEncodeBeforeWrite();
             }
             else
