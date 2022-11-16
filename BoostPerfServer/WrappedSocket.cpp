@@ -14,7 +14,7 @@ size_t WrappedSocket::getSentBytes() const
 }
 
 
-WrappedSocket::WrappedSocket(boost::asio::io_context& ioc) : m_socket(boost::asio::ip::tcp::socket(ioc))
+WrappedSocket::WrappedSocket(boost::asio::io_context& ioc) : m_socket(boost::asio::ip::tcp::socket(ioc)), m_buffer(131072, 0)
 {
     m_ioc = std::addressof(ioc);
 }
@@ -23,9 +23,19 @@ WrappedSocket::WrappedSocket(boost::asio::io_context& ioc) : m_socket(boost::asi
 
 void WrappedSocket::dispatchSocketForListen()
 {
-    this->doReadHeader();
+    this->doRead();
 }
 
+
+void WrappedSocket::doRead()
+{
+        m_socket.async_receive(boost::asio::buffer(m_buffer),0,
+            [this](auto ec, auto bytes) {
+                this->m_sentBytes += bytes;
+                this->doRead();
+            });
+    
+}
 
 void WrappedSocket::doReadHeader()
 {

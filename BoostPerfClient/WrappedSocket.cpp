@@ -13,8 +13,13 @@ size_t WrappedSocket::getSentBytes() const
     return m_sentBytes;
 }
 
+void WrappedSocket::resetSentBytes()
+{
+    m_sentBytes = 0;
+}
 
-WrappedSocket::WrappedSocket(boost::asio::io_context& ioc) : m_socket(boost::asio::ip::tcp::socket(ioc))
+
+WrappedSocket::WrappedSocket(boost::asio::io_context& ioc) : m_socket(boost::asio::ip::tcp::socket(ioc)), m_buffer(131072,0)
 {
     m_ioc = std::addressof(ioc);
 }
@@ -75,28 +80,49 @@ void WrappedSocket::doEncodeBeforeWrite()
     doWriteMsg();
 }
 
+//void WrappedSocket::doWriteMsg()
+//{
+//    boost::asio::async_write(m_socket,
+//        boost::asio::buffer(m_msg.data(), m_msg.length()),
+//        [this](boost::system::error_code ec, std::size_t length)
+//        {
+//            if (!ec)
+//            {
+//                this->addSentBytes(length);
+//                doEncodeBeforeWrite();
+//            }
+//            else
+//            {
+//                m_socket.close();
+//                m_connected = false;
+//            }
+//        });
+//}
 void WrappedSocket::doWriteMsg()
 {
-    boost::asio::async_write(m_socket,
-        boost::asio::buffer(m_msg.data(), m_msg.length()),
+    boost::asio::async_write(this->m_socket,
+        boost::asio::buffer(m_buffer),
         [this](boost::system::error_code ec, std::size_t length)
         {
             if (!ec)
             {
-                this->addSentBytes(length);
-                doEncodeBeforeWrite();
+                //std::cout << "from thread: " << std::this_thread::get_id() << std::endl;
+                m_sentBytes += length;
+                doWriteMsg();
             }
             else
             {
                 m_socket.close();
-                m_connected = false;
             }
         });
 }
 
-
+//void WrappedSocket::dispatchSocketForWrite()
+//{
+//    this->doEncodeBeforeWrite();
+//}
 void WrappedSocket::dispatchSocketForWrite()
 {
-    this->doEncodeBeforeWrite();
+    doWriteMsg();
 }
 

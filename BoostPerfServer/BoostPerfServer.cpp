@@ -4,12 +4,13 @@ using namespace boost::beast;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-BoostPerfServer::BoostPerfServer(int port, size_t numOfStreams) : m_port{ port }, m_numOfStreams{ numOfStreams }, m_resolver{ make_strand(m_ioc) },
-m_acceptor{ make_strand(m_ioc),tcp::endpoint(tcp::v4(), m_port) }, m_tempSocket{ std::make_shared<WrappedSocket>(m_ioc) }
+BoostPerfServer::BoostPerfServer(int port, size_t numOfStreams) : m_port{ port }, m_numOfStreams{ numOfStreams }, m_resolver{m_ioc },
+m_acceptor{ m_ioc,tcp::endpoint(tcp::v4(), m_port) }, m_tempSocket{ std::make_shared<WrappedSocket>(m_ioc) }
 {
     m_sockets.reserve(m_numOfStreams);
     m_runServer = true;
     doAccept();
+
 }
 void BoostPerfServer::doAccept()
 {
@@ -33,6 +34,7 @@ void BoostPerfServer::addSocket()
         m_tempSocket = std::make_shared<WrappedSocket>(m_ioc); // reset the temp socket
         this->doAccept();
         m_dispatch_cv.notify_one();
+        std::cout << "calling addsocket: " << m_sockets.size() << '\n';
     }
 }
 void BoostPerfServer::runSocketsLoop()
