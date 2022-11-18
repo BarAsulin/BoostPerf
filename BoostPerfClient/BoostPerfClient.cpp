@@ -1,13 +1,14 @@
 #include "BoostPerfClient.h"
 #include "BytesConversion.h"
 #include "Timer.h"
+#include <chrono>
 #include <iostream>
 
 using namespace boost::beast;
 using namespace boost::asio;
 using namespace boost::asio::ip;
 
-BoostPerfClient::BoostPerfClient(const std::string& hostname, int port, size_t numOfStreams) : m_port{ port }, m_numOfStreams{ numOfStreams }, m_resolver{ make_strand(m_ioc) },
+BoostPerfClient::BoostPerfClient(const std::string& hostname, int port, size_t numOfStreams) : m_port{ port }, m_numOfStreams{ numOfStreams }, m_resolver{ m_ioc },
 m_endpoint{ m_resolver.resolve(hostname, std::to_string(m_port)) }, m_tempSocket{ std::make_shared<WrappedSocket>(m_ioc) }
 {
     m_sockets.reserve(m_numOfStreams);
@@ -61,26 +62,35 @@ void BoostPerfClient::runSocketsLoop() // called when new sockets are added, dis
 }
 void BoostPerfClient::printSocketsStats()
 {
-	Timer timer{};
-	timer.Start();
+	std::chrono::time_point<std::chrono::system_clock> last =
+		std::chrono::system_clock::now();
+
+	std::chrono::duration<double> delta = std::chrono::seconds(0);
 	while (true)
 	{
+		delta += std::chrono::system_clock::now() - last;
+		last = std::chrono::system_clock::now();
 
-		std::this_thread::sleep_for(std::chrono::seconds(5));
-		std::cout << "Sockets rate sent in kbps:\n | ";
-		size_t sumInBytes{};
-		for (auto& wrappedSocket : m_sockets)
+		// print information periodically
+		if (delta.count() >= 5.0)
 		{
-			size_t socketSentBytes = wrappedSocket.get()->getSentBytes();
-			sumInBytes += socketSentBytes;
-
-			std::cout << (socketSentBytes/128) / timer.GetDuration()  << " | ";
+			for (auto& wrappedSocket : m_sockets)
+			{
+				size_t bytesSent = wrappedSocket.get()->getSentBytes();
+				std::printf("Mbytes/sec: %f, Gbytes/sec: %f, Mbits/sec: %f, Gbits/sec: %f\n",
+					bytesSent / 1.0e6 / delta.count(),
+					bytesSent / 1.0e9 / delta.count(),
+					8 * bytesSent / 1.0e6 / delta.count(),
+					8 * bytesSent / 1.0e9 / delta.count());
+				wrappedSocket.get()->resetSentBytes();
+				
+			}
+			// reset accumulators
+			delta = std::chrono::seconds(0);
 		}
-		std::cout << "\n Average sent per socket in KiB per second: " << bytesToKiB(sumInBytes / m_sockets.size())/timer.GetDuration() << '\n';
 	}
 }
 
-// called under lock
 // a loop to keep the asio context running as long as the client/server is alive.
 void BoostPerfClient::runIoContext() 
 {

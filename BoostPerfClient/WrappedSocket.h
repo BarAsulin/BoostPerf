@@ -18,7 +18,7 @@ public:
 	void dispatchSocketForWrite();
 	void addSentBytes(size_t bytes);
 	size_t getSentBytes() const;
-
+	void resetSentBytes();
 private:
 	void doReadHeader();
 	void doReadBody();
@@ -32,6 +32,7 @@ private:
 	boost::asio::io_context* m_ioc;
 	WrappedMessage m_msg{};
 	size_t m_sentBytes{};
+	std::vector<unsigned char> m_buffer;
 };
 
 
