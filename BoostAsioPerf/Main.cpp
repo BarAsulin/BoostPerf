@@ -1,12 +1,10 @@
 #include <boost/asio.hpp>
 #include "BoostPerfClient.h"
 #include "BoostPerfServer.h"
-#include "WrappedSocket.h"
 #include "ParsedArgv.h"
 #include <iostream>
-#include <memory>
-#include <thread>
-#include <chrono>
+
+
 namespace ba = boost::asio;
 
 void runClient(const ParsedArgv& args)
