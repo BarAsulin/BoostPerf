@@ -9,13 +9,19 @@
 #include <chrono>
 namespace ba = boost::asio;
 
-
 void runClient(const ParsedArgv& args)
 {
 	ba::io_context ioc;
 	ba::io_context::work work(ioc);
 	BoostPerfClient<WrappedSocket> perfClient(ioc, args.m_serverHostname, args.m_port, args.m_sockets);
-	ioc.run();
+	try
+	{
+		ioc.run();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
 }
 
 void runServer(const ParsedArgv& args)
@@ -23,8 +29,17 @@ void runServer(const ParsedArgv& args)
 	ba::io_context ioc;
 	ba::io_context::work work(ioc);
 	BoostPerfServer<WrappedSocket> perfServer(ioc, args.m_port, args.m_sockets);
-	ioc.run();
+	try
+	{
+		ioc.run();
+	}
+	catch (const std::exception& e)
+	{
+		std::cerr << e.what() << '\n';
+	}
 }
+
+
 int main(int argc, char** argv)
 {
 	if (argc < 3)
@@ -47,7 +62,3 @@ int main(int argc, char** argv)
 	return 0;
 }
 
-//TODO test use cases when the socket is forcibly closed by either party of the connection -- can use windows firewall.
-//TODO catch exceptions.
-//TODO change m_socketsMtx to be a shared_mutex.
-//TODO move implementations to BoostPerf.

@@ -3,9 +3,7 @@
 
 namespace ba = boost::asio;
 WrappedSocket::WrappedSocket(ba::io_context& ioc) : m_socket(ioc), m_buffer(131072,0) //128KiB
-{
-
-}
+{}
 
 WrappedSocket::~WrappedSocket()
 {
@@ -29,6 +27,8 @@ void WrappedSocket::doRead()
             }
             else
             {
+                std::cerr << "Error on socket: " << ec.message() << '\n';
+                m_socket.cancel();
                 m_socket.close();
                 m_connected = false;
             }
@@ -48,15 +48,14 @@ void WrappedSocket::doWrite()
         {
             if (!ec)
             {
-                //std::cout << "from thread: " << std::this_thread::get_id() << std::endl;
                 m_bytesProcessed += length;
                 doWrite();
             }
             else
             {
                 std::cerr << "Error on socket: " << ec.message() << '\n';
-                m_socket.close();
                 m_socket.cancel();
+                m_socket.close();
                 m_connected = false;
             }
         });

@@ -4,8 +4,9 @@
 #include "WrappedSocket.h"
 #include "BytesConversion.h"
 #include <boost/asio.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <vector>
-#include <mutex>
+#include <shared_mutex>
 #include <memory>
 #include <iostream>
 
@@ -28,7 +29,7 @@ protected:
 	ba::io_context& m_ioc;
 	std::vector<std::shared_ptr<SocketType>> m_sockets;
 	std::shared_ptr<SocketType> m_tempSocket;
-	std::mutex m_socketsMtx{};
+	std::shared_mutex m_socketsMtx{};
 	ba::deadline_timer m_printTimer;
 	ba::deadline_timer m_cleanupTimer;
 };
@@ -38,7 +39,7 @@ inline BoostPerfImpl<SocketType>::~BoostPerfImpl() {}
 
 
 template<typename SocketType>
-inline BoostPerfImpl<SocketType>::BoostPerfImpl(ba::io_context& ioc, size_t socketsToReserve) : m_ioc{ ioc }, m_tempSocket{ std::make_shared<SocketType>(m_ioc) }, m_printTimer{ ioc }, m_cleanupTimer{ioc}
+inline BoostPerfImpl<SocketType>::BoostPerfImpl(ba::io_context& ioc, size_t socketsToReserve) : m_ioc{ ioc }, m_tempSocket{ std::make_shared<SocketType>(m_ioc) }, m_printTimer{ ioc }, m_cleanupTimer{ ioc }
 {
 	m_sockets.reserve(socketsToReserve);
 }
@@ -62,7 +63,7 @@ template<typename SocketType>
 inline void BoostPerfImpl<SocketType>::printBytes()
 {
 	size_t sumOfAllSocketsInMbytes{};
-	std::lock_guard<std::mutex> lg(m_socketsMtx);
+	std::shared_lock<std::shared_mutex> lock(m_socketsMtx);
 	for (size_t i = 0; i < m_sockets.size(); i++)
 	{
 		size_t bytesProcessedBySocket = m_sockets[i].get()->m_bytesProcessed;
@@ -84,9 +85,10 @@ inline void BoostPerfImpl<SocketType>::runPeriodicPrint()
 			if (!ec)
 			{
 				{
-					std::lock_guard<std::mutex> lg(m_socketsMtx); // ensure the timer doesn't run before there are no sockets.
-					if (m_sockets.size() <= 0)
+					std::shared_lock<std::shared_mutex> lock(m_socketsMtx); // ensure the timer doesn't run before there are no sockets.
+					if (m_sockets.size() == 0)
 					{
+						runPeriodicPrint();
 						return;
 					}
 				}
@@ -94,7 +96,7 @@ inline void BoostPerfImpl<SocketType>::runPeriodicPrint()
 			}
 			else
 			{
-				std::cerr << "Error on printing data:\n";
+				std::cerr << "Error on printing data: ";
 				std::cerr << ec.message() << '\n';
 				return;
 			}
@@ -110,9 +112,10 @@ inline void BoostPerfImpl<SocketType>::runPeriodicCleanup()
 			if (!ec)
 			{
 				{
-					std::lock_guard<std::mutex> lg(m_socketsMtx); // ensure the timer doesn't run before there are no sockets.
-					if (m_sockets.size() <= 0)
+					std::shared_lock<std::shared_mutex> lock(m_socketsMtx);
+					if (m_sockets.size() == 0) // ensure the timer doesn't run before there are no sockets.
 					{
+						runPeriodicCleanup();
 						return;
 					}
 				}
@@ -120,26 +123,11 @@ inline void BoostPerfImpl<SocketType>::runPeriodicCleanup()
 			}
 			else
 			{
-				std::cerr << "Error on cleaning up closed sockets:\n";
+				std::cerr << "Error on cleaning up closed sockets: ";
 				std::cerr << ec.message() << '\n';
 				return;
 			}
 		});
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 #endif // BOOST_PERF_IMPL
