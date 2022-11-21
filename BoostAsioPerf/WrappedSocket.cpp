@@ -1,7 +1,8 @@
 #include "WrappedSocket.h"
 #include <iostream>
 
-WrappedSocket::WrappedSocket(boost::asio::io_context& ioc) : m_socket(ioc), m_buffer(131072,0) //128KiB
+namespace ba = boost::asio;
+WrappedSocket::WrappedSocket(ba::io_context& ioc) : m_socket(ioc), m_buffer(131072,0) //128KiB
 {
 
 }
@@ -19,7 +20,7 @@ void WrappedSocket::dispatchSocketForRead()
 
 void WrappedSocket::doRead()
 {
-    m_socket.async_receive(boost::asio::buffer(m_buffer), 0,
+    m_socket.async_receive(ba::buffer(m_buffer), 0,
         [this](auto ec, auto bytes) {
             if (!ec)
             {
@@ -42,7 +43,7 @@ void WrappedSocket::dispatchSocketForWrite()
 
 void WrappedSocket::doWrite()
 {
-    boost::asio::async_write(m_socket, boost::asio::buffer(m_buffer),
+    ba::async_write(m_socket, ba::buffer(m_buffer),
         [this](boost::system::error_code ec, size_t length)
         {
             if (!ec)

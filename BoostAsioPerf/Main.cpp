@@ -36,12 +36,18 @@ int main(int argc, char** argv)
 	{
 		runClient(args);
 	}
-	if (args.m_IsServer)
+	else if (args.m_IsServer)
 	{
 		runServer(args);
+	}
+	else
+	{
+		ParsedArgv::printUsage();
 	}
 	return 0;
 }
 
-//TODO test use cases when the socket is forcibly closed by either party of the connection
-//TODO ensure only m_numOfSockets are added to the vector.
+//TODO test use cases when the socket is forcibly closed by either party of the connection -- can use windows firewall.
+//TODO catch exceptions.
+//TODO change m_socketsMtx to be a shared_mutex.
+//TODO move implementations to BoostPerf.
