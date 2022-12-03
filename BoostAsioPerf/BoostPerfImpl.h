@@ -4,6 +4,7 @@
 #include "WrappedSocket.h"
 #include "BytesConversion.h"
 #include <boost/asio.hpp>
+#include <boost/asio/ssl.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <vector>
 #include <shared_mutex>
@@ -17,6 +18,7 @@ class BoostPerfImpl : public IBoostPerf<SocketType>
 {
 public:
 	BoostPerfImpl(ba::io_context& ioc, size_t socketsToReserve);
+	BoostPerfImpl(ba::io_context& ioc, ba::ssl::context& ctx, size_t socketsToReserve);
 	virtual ~BoostPerfImpl();
 	virtual void addSocket() = 0;
 	virtual void initializeTempSocket() = 0;
@@ -24,7 +26,9 @@ public:
 	virtual void printBytes() override;
 	virtual void runPeriodicPrint() override;
 	virtual void runPeriodicCleanup() override;
-
+	BoostPerfImpl(const BoostPerfImpl&) = delete;
+	BoostPerfImpl& operator=(const BoostPerfImpl&) = delete;
+	
 protected:
 	ba::io_context& m_ioc;
 	std::vector<std::shared_ptr<SocketType>> m_sockets;
@@ -40,6 +44,12 @@ inline BoostPerfImpl<SocketType>::~BoostPerfImpl() {}
 
 template<typename SocketType>
 inline BoostPerfImpl<SocketType>::BoostPerfImpl(ba::io_context& ioc, size_t socketsToReserve) : m_ioc{ ioc }, m_tempSocket{ std::make_shared<SocketType>(m_ioc) }, m_printTimer{ ioc }, m_cleanupTimer{ ioc }
+{
+	m_sockets.reserve(socketsToReserve);
+}
+
+template<typename SocketType>
+inline BoostPerfImpl<SocketType>::BoostPerfImpl(ba::io_context& ioc, ba::ssl::context& ctx, size_t socketsToReserve) : m_ioc{ ioc }, m_tempSocket{ std::make_shared<SocketType>(m_ioc,ctx) }, m_printTimer{ ioc }, m_cleanupTimer{ ioc }
 {
 	m_sockets.reserve(socketsToReserve);
 }
@@ -85,8 +95,8 @@ inline void BoostPerfImpl<SocketType>::runPeriodicPrint()
 			if (!ec)
 			{
 				{
-					std::shared_lock<std::shared_mutex> lock(m_socketsMtx); // ensure the timer doesn't run before there are no sockets.
-					if (m_sockets.size() == 0)
+					std::shared_lock<std::shared_mutex> lock(m_socketsMtx); 
+					if (m_sockets.size() == 0) // If we don't have sockets yet just call the timer again as there is nothing to print.
 					{
 						runPeriodicPrint();
 						return;
@@ -113,7 +123,7 @@ inline void BoostPerfImpl<SocketType>::runPeriodicCleanup()
 			{
 				{
 					std::shared_lock<std::shared_mutex> lock(m_socketsMtx);
-					if (m_sockets.size() == 0) // ensure the timer doesn't run before there are no sockets.
+					if (m_sockets.size() == 0) //If we don't have sockets yet just call the timer again as there is nothing to cleanup.
 					{
 						runPeriodicCleanup();
 						return;

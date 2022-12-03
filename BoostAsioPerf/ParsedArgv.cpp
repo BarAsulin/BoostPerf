@@ -31,13 +31,16 @@ ParsedArgv::ParsedArgv(int argc, char* argv[])
 			assert((i < argc) && "Missing arguments");
 			m_sockets = std::stoi(argv[i]);
 		}
-
+		else if (strcmp(argv[i], "--TLS") == 0)
+		{
+			m_usingSSL = true;
+		}
 	}
 }
 
 void ParsedArgv::printUsage()
 {
-	std::cerr << "Usage: [ --server ] | [ --client <ServerIp> ] [ --port <port> ]  [ --sockets <numOfSockets> ](8 sockets are used by default)\n";
+	std::cerr << "Usage: [ --server ] | [ --client <ServerIp> ] [ --port <port> ] [--TLS ](uses TLS1.2) [ --sockets <numOfSockets> ](8 sockets are used by default)\n";
 	std::cerr << "Example:\n";
 	std::cerr << "Client: --client 192.168.111.20 --port 2005 --sockets 20\n";
 	std::cerr << "Server: --server --port 2005 --sockets 20\n";
